@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maria – IUD Consent Simulation | NSG 309</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #0070C0;
+    --pink: #D507C5;
+    --blue-light: #EBF3FB;
+    --pink-light: #FDE8FB;
+    --navy: #040C28;
+    --text: #212121;
+    --text-muted: #5a5a5a;
+    --border: rgba(0,0,0,0.12);
+    --bg: #ffffff;
+    --bg2: #f5f7fa;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg2);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, #0d2b4e 60%, var(--blue) 100%);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid var(--pink);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    color: #fff; background: var(--blue); padding: 4px 10px; border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+  .header h1 { font-size: 16px; font-weight: 600; color: #fff; }
+  .header p  { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  .score-badge {
+    font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px;
+    background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff; transition: all 0.4s; white-space: nowrap;
+  }
+
+  /* ── Main layout ── */
+  .main { display: flex; gap: 0; height: calc(100vh - 62px); }
+
+  /* ── Avatar sidebar ── */
+  .sidebar {
+    width: 240px; min-width: 240px;
+    background: linear-gradient(175deg, #071a35 0%, #0d2b4e 100%);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 20px; gap: 18px; overflow-y: auto;
+  }
+
+  .avatar-ring {
+    position: relative; width: 130px; height: 130px;
+    border-radius: 50%; padding: 3px;
+    background: conic-gradient(var(--pink) 0%, var(--blue) 50%, var(--pink) 100%);
+  }
+  .avatar-ring-inner {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #1a3a5c; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .status-dot {
+    position: absolute; bottom: 8px; right: 8px;
+    width: 14px; height: 14px; border-radius: 50%; background: #22c55e;
+    border: 2.5px solid #071a35;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.25);opacity:0.7} }
+
+  .patient-name { font-size: 17px; font-weight: 600; color: #fff; }
+  .patient-sub  { font-size: 12px; color: rgba(255,255,255,0.55); text-align: center; line-height: 1.5; }
+
+  .metric { width: 100%; }
+  .metric-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .metric-label { font-size: 11px; color: rgba(255,255,255,0.55); }
+  .metric-val   { font-size: 11px; font-weight: 600; color: #fff; }
+  .metric-track { height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; }
+  .metric-fill  { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(.4,0,.2,1), background 0.7s; }
+
+  .info-card {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+    padding: 12px; font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.6;
+  }
+  .info-card strong { color: #fff; font-size: 12px; display: block; margin-bottom: 5px; }
+
+  .tip-card {
+    width: 100%; background: rgba(213,7,197,0.1);
+    border: 1px solid rgba(213,7,197,0.25); border-radius: 10px;
+    padding: 10px 12px; font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.6;
+  }
+  .tip-card strong { color: var(--pink); font-size: 12px; display: block; margin-bottom: 4px; }
+
+  /* ── Chat area ── */
+  .chat-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    background: #fff; min-width: 0;
+  }
+
+  .chat-toolbar {
+    padding: 10px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; flex-shrink: 0;
+  }
+  .chat-toolbar h2 { font-size: 14px; font-weight: 600; color: var(--blue); }
+  .chat-toolbar p  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .reset-btn {
+    font-size: 12px; padding: 5px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: transparent; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .reset-btn:hover { background: var(--bg2); border-color: var(--blue); color: var(--blue); }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .msg { display: flex; gap: 10px; align-items: flex-end; animation: fadeIn 0.3s ease; }
+  .msg.nurse { flex-direction: row-reverse; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  .msg-ava {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0; margin-bottom: 2px;
+  }
+  .msg.patient .msg-ava { background: var(--blue-light); color: var(--blue); }
+  .msg.nurse   .msg-ava { background: var(--pink-light); color: var(--pink); }
+  .msg.system  .msg-ava { background: var(--bg2); color: var(--text-muted); }
+
+  .msg-bub {
+    max-width: 68%; padding: 10px 14px; border-radius: 14px;
+    font-size: 14px; line-height: 1.55; color: var(--text);
+  }
+  .msg.patient .msg-bub { background: var(--blue-light); border: 1px solid rgba(0,112,192,0.18); border-bottom-left-radius: 4px; }
+  .msg.nurse   .msg-bub { background: var(--pink-light); border: 1px solid rgba(213,7,197,0.18); border-bottom-right-radius: 4px; }
+  .msg.system  .msg-bub {
+    background: var(--bg2); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text-muted); border-radius: 8px; font-style: italic;
+    max-width: 80%;
+  }
+
+  .typing-dots { display: flex; gap: 5px; align-items: center; padding: 2px 0; }
+  .typing-dots span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--blue); opacity: 0.4;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.35} 40%{opacity:1} }
+
+  /* ── Footer ── */
+  .chat-footer { padding: 14px 20px; border-top: 1px solid var(--border); background: #fff; flex-shrink: 0; }
+
+  .quick-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+  .qpill {
+    font-size: 12px; padding: 5px 13px; border-radius: 20px;
+    border: 1px solid var(--blue); background: transparent; color: var(--blue);
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .qpill:hover { background: var(--blue-light); }
+
+  .input-row { display: flex; gap: 10px; }
+  .chat-input {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: var(--text);
+    background: var(--bg2); outline: none; resize: none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: var(--blue); background: #fff; }
+  .send-btn {
+    padding: 10px 22px; background: var(--blue); color: #fff;
+    border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .send-btn:hover:not(:disabled) { opacity: 0.85; }
+  .send-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .feedback-strip {
+    margin-top: 8px; padding: 7px 13px; border-radius: 8px;
+    font-size: 12px; line-height: 1.5; display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .feedback-strip.show { display: block; }
+  .feedback-strip.good { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+  .feedback-strip.warn { background: #fff8e1; color: #bf6000; border: 1px solid #ffcc80; }
+  .feedback-strip.bad  { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+
+  /* ── Completion overlay ── */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(4,12,40,0.75); z-index: 50;
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay-card {
+    background: #fff; border-radius: 16px; padding: 36px 40px;
+    max-width: 420px; width: 90%; text-align: center;
+    border-top: 5px solid var(--blue);
+  }
+  .overlay-card .check { font-size: 48px; margin-bottom: 12px; }
+  .overlay-card h2 { font-size: 22px; font-weight: 700; color: var(--blue); margin-bottom: 8px; }
+  .overlay-card p  { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+  .overlay-card .final-score { font-size: 36px; font-weight: 800; color: var(--pink); margin: 10px 0; }
+  .overlay-btn {
+    padding: 11px 28px; background: var(--blue); color: #fff; border: none;
+    border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: opacity 0.15s;
+  }
+  .overlay-btn:hover { opacity: 0.85; }
+
+  @media (max-width: 640px) {
+    .sidebar { width: 180px; min-width: 180px; padding: 16px 10px; gap: 12px; }
+    .avatar-ring { width: 100px; height: 100px; }
+    .msg-bub { max-width: 80%; font-size: 13px; }
+    .header h1 { font-size: 13px; }
+    .quick-pills { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">NSG 309</div>
+    <div>
+      <h1>IUD Informed Consent — Clinical Simulation</h1>
+      <p>Practice patient assessment before witnessing consent</p>
+    </div>
+  </div>
+  <div class="score-badge" id="score-badge">Score: 0 / 100</div>
+</div>
+
+<div class="main">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="avatar-ring">
+      <div class="avatar-ring-inner">
+        <svg width="124" height="124" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="60" fill="#1a3a5c"/>
+          <rect x="48" y="82" width="24" height="18" rx="4" fill="#d4956a"/>
+          <path d="M20 120 Q20 95 40 90 L48 88 Q60 93 72 88 L80 90 Q100 95 100 120 Z" fill="#0070C0"/>
+          <path d="M48 88 Q54 96 60 98 Q66 96 72 88" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          <ellipse cx="60" cy="62" rx="28" ry="30" fill="#d4956a"/>
+          <path d="M33 58 Q34 28 60 28 Q86 28 87 58 Q80 44 60 44 Q40 44 33 58 Z" fill="#3d1f0a"/>
+          <path d="M33 58 Q30 70 33 80 Q36 72 40 74 Q36 64 38 58 Z" fill="#3d1f0a"/>
+          <path d="M87 58 Q90 70 87 80 Q84 72 80 74 Q84 64 82 58 Z" fill="#3d1f0a"/>
+          <ellipse cx="51" cy="62" rx="4" ry="4.5" fill="#fff"/>
+          <ellipse cx="69" cy="62" rx="4" ry="4.5" fill="#fff"/>
+          <circle cx="51" cy="62" r="2.5" fill="#3d1f0a"/>
+          <circle cx="69" cy="62" r="2.5" fill="#3d1f0a"/>
+          <circle cx="52" cy="61" r="0.8" fill="#fff"/>
+          <circle cx="70" cy="61" r="0.8" fill="#fff"/>
+          <path d="M47 57 Q51 55 55 57" fill="none" stroke="#3d1f0a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M65 57 Q69 55 73 57" fill="none" stroke="#3d1f0a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M58 66 Q60 72 62 66" fill="none" stroke="#b07040" stroke-width="1" stroke-linecap="round"/>
+          <path d="M54 77 Q60 80 66 77" fill="none" stroke="#a06040" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M44 98 Q40 106 44 112 Q50 118 56 114" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="56" cy="114" r="3" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+
+    <div class="patient-name">Maria</div>
+    <div class="patient-sub">28 y/o · G1P1<br>OB/GYN Follow-up Visit</div>
+
+    <div class="metric">
+      <div class="metric-row">
+        <span class="metric-label">Comfort level</span>
+        <span class="metric-val" id="mood-val">45%</span>
+      </div>
+      <div class="metric-track">
+        <div class="metric-fill" id="mood-fill" style="width:45%;background:#0070C0"></div>
+      </div>
+    </div>
+
+    <div class="metric">
+      <div class="metric-row">
+        <span class="metric-label">Comprehension</span>
+        <span class="metric-val" id="comp-val">30%</span>
+      </div>
+      <div class="metric-track">
+        <div class="metric-fill" id="comp-fill" style="width:30%;background:#D507C5"></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <strong>Clinical Scenario</strong>
+      Provider recommended a levonorgestrel IUD (Mirena) and left the room. You are the nurse — assess readiness and witness consent.
+    </div>
+
+    <div class="tip-card">
+      <strong>Your objectives</strong>
+      Confirm competency, verify understanding of risks/benefits/alternatives, and ensure voluntary decision-making before witnessing the signature.
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-wrap">
+    <div class="chat-toolbar">
+      <div>
+        <h2>Patient Interaction — Informed Consent Assessment</h2>
+        <p>Speak with Maria as her nurse. Ask questions to assess her readiness to consent.</p>
+      </div>
+      <button class="reset-btn" onclick="resetSim()">↺ Reset</button>
+    </div>
+
+    <div class="chat-messages" id="chat-msgs">
+      <div class="msg system">
+        <div class="msg-ava">i</div>
+        <div class="msg-bub">Simulation started. Maria is waiting. You are the nurse assessing her informed consent before witnessing the form.</div>
+      </div>
+      <div class="msg patient">
+        <div class="msg-ava">M</div>
+        <div class="msg-bub">Hi... the doctor just left. She said I should sign some papers? I'm not totally sure what's happening to be honest.</div>
+      </div>
+    </div>
+
+    <div class="chat-footer">
+      <div class="quick-pills">
+        <button class="qpill" onclick="sendQ('Can you tell me what the doctor explained to you today?')">What did the doctor explain?</button>
+        <button class="qpill" onclick="sendQ('Do you know what the risks of an IUD are?')">Ask about risks</button>
+        <button class="qpill" onclick="sendQ('Has anyone pressured you into making this decision?')">Check voluntariness</button>
+        <button class="qpill" onclick="sendQ('Did the doctor discuss any other contraceptive options with you?')">Ask about alternatives</button>
+        <button class="qpill" onclick="sendQ('Do you have any questions before I witness your signature?')">Offer to answer questions</button>
+      </div>
+      <div class="input-row">
+        <textarea class="chat-input" id="chat-input" rows="2"
+          placeholder="Type your question or statement to Maria..."
+          onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMsg()">Send</button>
+      </div>
+      <div class="feedback-strip" id="feedback-strip"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Completion overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div class="check">✅</div>
+    <h2>Consent Assessment Complete</h2>
+    <div class="final-score" id="final-score">0</div>
+    <p>Maria demonstrates sufficient understanding and voluntary decision-making. You may proceed to witness the informed consent signature.</p>
+    <button class="overlay-btn" onclick="resetSim()">Try Again</button>
+  </div>
+</div>
+
+<script>
+const SYSTEM = `You are Maria, a 28-year-old patient (G1P1) at an OB/GYN clinic. Your provider recommended a levonorgestrel IUD (Mirena) and left. A nursing student is now talking with you to assess your consent.
+
+YOUR STATE:
+- Anxious and uncertain — the doctor spoke quickly
+- You remember the IUD "lasts a long time" and "goes inside" but are fuzzy on the risks
+- NOT being coerced — you genuinely want this contraception
+- You weren't clearly told about all alternatives (pill, implant, patch, ring, sterilization)
+- Your husband is supportive but absent
+- You worry about pain during insertion
+- You want to feel heard and reassured
+
+RESPOND BASED ON WHAT THE NURSE ASKS:
+- Doctor explained: very effective, lasts up to 5 years — you didn't catch the risks clearly
+- Risks: you heard "cramping" but aren't sure of others — need help from nurse
+- Alternatives: doctor didn't really go through other options with you
+- Pressure/coercion: clearly no — this is your own free choice
+- Questions: will it hurt? how soon does it work? can I get pregnant after removal?
+- If nurse is supportive and clear: comfort rises
+- If nurse skips key areas: express some confusion
+- If nurse rushes you: say you feel rushed, ask to slow down
+
+Keep responses SHORT — 2 to 4 sentences. Sound like a real nervous patient, not a textbook. Occasionally ask the nurse a question back.
+
+After EVERY response, on a NEW LINE output EXACTLY this JSON (no other text on that line):
+{"mood":NUMBER,"comp":NUMBER,"score_delta":NUMBER,"feedback":"TEXT","feedback_type":"good|warn|bad"}
+
+mood = Maria's current comfort 0-100 (starts 45)
+comp = Maria's demonstrated comprehension 0-100 (starts 30)
+score_delta = points earned this turn -5 to +15
+feedback = brief coaching note for the student (what they did well or missed)
+feedback_type = good | warn | bad`;
+
+let history = [];
+let score = 0, mood = 45, comp = 30;
+let done = false;
+
+function scroll() {
+  const el = document.getElementById('chat-msgs');
+  el.scrollTop = el.scrollHeight;
+}
+
+function addMsg(role, text) {
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const ava = document.createElement('div');
+  ava.className = 'msg-ava';
+  ava.textContent = role === 'patient' ? 'M' : role === 'nurse' ? 'RN' : 'i';
+  const bub = document.createElement('div');
+  bub.className = 'msg-bub';
+  bub.textContent = text;
+  div.appendChild(ava);
+  div.appendChild(bub);
+  wrap.appendChild(div);
+  scroll();
+}
+
+function showTyping() {
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg patient'; div.id = 'typing';
+  div.innerHTML = '<div class="msg-ava">M</div><div class="msg-bub"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  wrap.appendChild(div); scroll();
+}
+
+function removeTyping() { const el = document.getElementById('typing'); if (el) el.remove(); }
+
+function updateMetrics(m, c, d) {
+  mood = Math.min(100, Math.max(0, m));
+  comp = Math.min(100, Math.max(0, c));
+  score = Math.min(100, Math.max(0, score + d));
+
+  document.getElementById('mood-val').textContent = mood + '%';
+  document.getElementById('comp-val').textContent = comp + '%';
+  const mf = document.getElementById('mood-fill');
+  mf.style.width = mood + '%';
+  mf.style.background = mood > 65 ? '#22c55e' : mood > 35 ? '#0070C0' : '#e11d48';
+  const cf = document.getElementById('comp-fill');
+  cf.style.width = comp + '%';
+  cf.style.background = comp > 65 ? '#22c55e' : '#D507C5';
+
+  const badge = document.getElementById('score-badge');
+  badge.textContent = 'Score: ' + score + ' / 100';
+  badge.style.background = score > 75 ? 'rgba(34,197,94,0.2)' : score > 40 ? 'rgba(255,255,255,0.12)' : 'rgba(225,29,72,0.2)';
+  badge.style.borderColor = score > 75 ? '#22c55e' : score > 40 ? 'rgba(255,255,255,0.3)' : '#e11d48';
+
+  if (score >= 80 && comp >= 70 && !done) {
+    done = true;
+    setTimeout(() => {
+      document.getElementById('final-score').textContent = score + ' / 100';
+      document.getElementById('overlay').classList.add('show');
+    }, 1200);
+  }
+}
+
+function showFeedback(text, type) {
+  const el = document.getElementById('feedback-strip');
+  el.textContent = text;
+  el.className = 'feedback-strip show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'feedback-strip'; }, 7000);
+}
+
+async function processMsg(text) {
+  if (done) return;
+  document.getElementById('send-btn').disabled = true;
+  addMsg('nurse', text);
+  history.push({ role: 'user', content: text });
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 420,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const raw = (data.content?.[0]?.text || '').trim();
+    const lines = raw.split('\n');
+    let jsonLine = null;
+    const speech = [];
+    for (const l of lines) {
+      const t = l.trim();
+      if (t.startsWith('{') && t.includes('mood')) jsonLine = t;
+      else if (t) speech.push(t);
+    }
+    removeTyping();
+    const spokenText = speech.join(' ');
+    if (spokenText) { addMsg('patient', spokenText); history.push({ role: 'assistant', content: raw }); }
+    if (jsonLine) {
+      try {
+        const p = JSON.parse(jsonLine);
+        updateMetrics(p.mood ?? mood, p.comp ?? comp, p.score_delta ?? 0);
+        if (p.feedback) showFeedback(p.feedback, p.feedback_type || 'warn');
+      } catch(e) {}
+    }
+  } catch(e) {
+    removeTyping();
+    addMsg('system', 'Connection error — please check your internet and try again.');
+  }
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('chat-input').focus();
+}
+
+function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  const t = inp.value.trim();
+  if (!t) return;
+  inp.value = '';
+  processMsg(t);
+}
+
+function sendQ(t) { processMsg(t); }
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+
+function resetSim() {
+  history = []; score = 0; mood = 45; comp = 30; done = false;
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('feedback-strip').className = 'feedback-strip';
+  document.getElementById('chat-msgs').innerHTML = `
+    <div class="msg system"><div class="msg-ava">i</div><div class="msg-bub">Simulation restarted. Maria is waiting.</div></div>
+    <div class="msg patient"><div class="msg-ava">M</div><div class="msg-bub">Hi... the doctor just left. She said I should sign some papers? I'm not totally sure what's happening to be honest.</div></div>`;
+  updateMetrics(45, 30, 0); score = 0;
+  document.getElementById('score-badge').textContent = 'Score: 0 / 100';
+  document.getElementById('chat-input').focus();
+}
+</script>
+</body>
+</html>
